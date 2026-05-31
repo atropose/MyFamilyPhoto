@@ -191,8 +191,17 @@ function JumpRail({ groups, activeYm, onJump }: {
 export default function GalleryPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState<Filters>({
-    startDate: '', endDate: '', location: '', member: 'all', media: 'all',
+  const [filters, setFilters] = useState<Filters>(() => {
+    try {
+      const raw = sessionStorage.getItem(GALLERY_STATE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (Date.now() - (saved.savedAt || 0) <= 30 * 60 * 1000) {
+          return saved.filters;
+        }
+      }
+    } catch {}
+    return { startDate: '', endDate: '', location: '', member: 'all', media: 'all' };
   });
   const [items, setItems] = useState<MediaItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -248,7 +257,6 @@ export default function GalleryPage() {
       pendingScrollRef.current = saved.clickedItemId ?? null;
       setItems(restoredItems);
       setPage(saved.page);
-      setFilters(saved.filters);
       setTotal(saved.total);
       setHasMore(saved.hasMore);
     } catch {
